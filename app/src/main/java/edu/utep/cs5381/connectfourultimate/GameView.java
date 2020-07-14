@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
@@ -48,6 +49,13 @@ public class GameView extends View {
                     posDiskGenY = posGridGenY + (playUnitSize/2);
                 }
             });
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_BUTTON_PRESS
         }
     }
 
@@ -113,16 +121,33 @@ public class GameView extends View {
             The idea is to go use the Board object to listen for ChangeListener. We must also
             implement and define the function diskDropped() to draw the new circle here.
         */
+
+        // New Top Row of Circles draw and change color according to who's turn it is
         for (int i = 0; i <= board.numOfColumns(); i++) {
-            for (int j = 0; j <= board.numOfColumns(); j++) {
-                // The circles are placeholding for possible positions of disks
-                Log.d("Draw_Circle", String.format("Circle \t\t %d, %d",
-                        posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
-                        posGridGenY + (long)(playUnitSize/2) + playUnitPad + (j * playUnitSize)));
-                canvas.drawCircle(
-                        posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
-                        posGridGenY + (long)(playUnitSize/2) + playUnitPad + (j * playUnitSize),
-                        diskRadius, paintDisks);
+            Log.d("Draw_Circle_TOP", String.format("Circle \t\t %d, %d",
+                    posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
+                    posGridGenY + (long)(playUnitSize/2) + playUnitPad));
+            canvas.drawCircle(
+                    posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
+                    posGridGenY + (long)(playUnitSize/2) + playUnitPad,
+                    diskRadius, paintDisks);
+        }
+
+        // Draw the rest of the circles that should be made
+        for (int i = 0; i < board.numOfColumns(); i++) {
+            for (int j = 1; j < board.numOfRows(); j++) {
+                // The circles are placeholders for possible positions of disks
+                Player player = board.playerAt(i,j);
+                if (player != null){
+                    Log.d("Draw_Circle", String.format("Circle \t\t %d, %d",
+                            posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
+                            posGridGenY + (long)(playUnitSize/2) + playUnitPad + ((j+1) * playUnitSize)));
+                    canvas.drawCircle(
+                            posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
+                            posGridGenY + (long)(playUnitSize/2) + playUnitPad + ((j+1) * playUnitSize),
+                            diskRadius, paintDisks);
+                }
+
             }
         }
     }
