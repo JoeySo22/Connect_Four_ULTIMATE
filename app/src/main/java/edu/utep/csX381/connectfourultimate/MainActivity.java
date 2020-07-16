@@ -18,12 +18,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Initiate a new board for our game
         board = new Board();
+        // This is our View/Control object
         gameView = new GameView(this);
+        // Associated our board to our gameView
         gameView.setBoard(board);
+        // Call view
         setContentView(gameView);
-        
-        Player player = new Player("Me");
+        // Repaint
         gameView.invalidate();
     }
 }

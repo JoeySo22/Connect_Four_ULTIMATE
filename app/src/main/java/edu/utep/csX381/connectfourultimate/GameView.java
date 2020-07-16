@@ -35,12 +35,14 @@ public class GameView extends View {
         super(context);
         calculateWidthAndHeight();
         player1 = new Player("Aang");
-        player1.setColor(Color.BLUE);
+        player1.setColor(Color.rgb(255,203,135));
         player2 = new Player("Toph");
-        player2.setColor(Color.RED);
+        player2.setColor(Color.rgb(135,255,235));
         currentPlayer = player1;
     }
 
+
+    // Much of the graphical framework is done here. Please look below
     private void calculateWidthAndHeight() {
         ViewTreeObserver viewTreeObserver = getViewTreeObserver();
         if (viewTreeObserver.isAlive()) {
@@ -72,6 +74,7 @@ public class GameView extends View {
         float xCoordinate = event.getX();
         float yCoordinate = event.getY();
         int colIndex = columnIndex(xCoordinate);
+        // If the user clicked on the row of disks... we drop the disk
         if (yCoordinate >= posGridGenY && yCoordinate <= (posGridGenY+playUnitSize)) {
             switch( event.getAction() ){
                 case MotionEvent.ACTION_DOWN:
@@ -89,13 +92,14 @@ public class GameView extends View {
 
         return true;
     }
-
+    // Simple toggle for switching players
     private void switchPlayer() {
         if (currentPlayer == player1)
             currentPlayer = player2;
         else currentPlayer = player1;
     }
 
+    // Used for approximating what column the user wishes to drop in.
     public int columnIndex(float x){
         if(x >= 0 && x < (playUnitSize)) return 0;
         else if(x >= playUnitSize && x < (playUnitSize*2)) return 1;
@@ -114,6 +118,11 @@ public class GameView extends View {
     public void onDraw(Canvas canvas) {
         Log.d("Draw", "onDraw() CALLED!!!!!");
         super.onDraw(canvas);
+
+        //Drawing players and their names on game startup
+        drawPlayers(canvas);
+        drawPlayerNames(canvas);
+
         // Draw Vertical grid lines
         paintLines.setColor(Color.BLACK);
         paintLines.setStrokeWidth(14);
@@ -195,40 +204,39 @@ public class GameView extends View {
                             posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
                             posGridGenY + (long)(playUnitSize/2) + playUnitPad + ((j+1) * playUnitSize),
                             diskRadius, player.getPaint());
+
                 }
 
             }
         }// draw circles when dropping in columns LOOP END
 
-        //Drawing players and their names on game startup
-        drawPlayers(canvas);
-        drawPlayerNames(canvas);
-
         /* If a given player has won, draw the strokes for the winning sequence */
-        if(board.isWonBy(player1)) {
-            winningSequence = board.winningRow();  //save winning sequence in an Iterable
-            paintDisks.setColor(Color.GREEN);      //paint winning sequence GREEN
+        if(board.isWonBy(currentPlayer)) {
+            winningSequence = board.winningRow();
+            paintDisks.setColor(Color.GREEN);
             for (Board.Place coordinates : winningSequence) {
                 int i = coordinates.getX();
                 int j = coordinates.getY();
 
-                // The circles are placeholders for possible positions of disks
+                // The circles are placeholders for possible winning sequence of disks
                 Player player = board.playerAt(i, j);
                 if (player != null) {
-                Log.d("Draw_Circle", String.format("Circle \t\t %d, %d",
-                        posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
-                        posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize)));
-                canvas.drawCircle(
-                        posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
-                        posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize),
-                        diskRadius, paintDisks);
+                    /* Debugging comment ...*/
+                    Log.d("Draw_Circle", String.format("Circle \t\t %d, %d",
+                            posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
+                            posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize)));
+                    canvas.drawCircle(
+                            posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
+                            posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize),
+                            diskRadius, paintDisks);
+                    drawWinner(canvas, currentPlayer.name()); //draw the name of the winner on the screen
                 }//end if statement
             }//end for loop for winning sequence
-
-
         }//winning sequence if statement
+
     } //end onDraw method
 
+    /* drawPlayers draws the image icons of the current players */
     public void drawPlayers(Canvas canvas){
         //Draw Aang and Toph Players
         Paint aangPlayer = new Paint();
@@ -240,6 +248,15 @@ public class GameView extends View {
         canvas.drawBitmap(drawTophPlayer, 1000, 50, tophPlayer);
     }
 
+    /* drawWinner draws the name of the winning player! */
+    public void drawWinner(Canvas canvas, String name){
+        Paint winner = new Paint();
+        winner.setTextSize(100);
+        winner.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText(String.format("%s WON!", name.toUpperCase()), 750, 800, winner);
+    }
+
+    /* drawPlayerNames draws the name of the current players */
     public void drawPlayerNames(Canvas canvas){
         //Draw names of players
         Paint aangName = new Paint();
@@ -253,6 +270,7 @@ public class GameView extends View {
         canvas.drawText("Toph", 950, 450, tophName);
     }
 
+    /* Set board calls redraw to redraw the board */
     public void setBoard(Board board) {
         // This function will also supply the ChangeListener
         this.board = board;
@@ -266,6 +284,7 @@ public class GameView extends View {
         });
     }
 
+    // annonymous method ChangeListener needed to call invalidate.
     private void redraw() {
         Log.d("Redraw", "redraw() called!!");
         this.invalidate();
