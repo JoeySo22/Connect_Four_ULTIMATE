@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="edu.utep.cs5381.connectfourultimate">
+    package="edu.utep.csX381.connectfourultimate">
 
     <application
         android:allowBackup="true"
