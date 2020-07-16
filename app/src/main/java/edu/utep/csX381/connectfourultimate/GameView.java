@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.view.ViewTreeObserver;
 import edu.utep.csX381.connectfourultimate.R;
 import edu.utep.csX381.connectfourultimate.model.Board;
 import edu.utep.csX381.connectfourultimate.model.Player;
+
 /*
     Authors: Jose Eduardo Soto & Ruth Trejo
  */
@@ -23,11 +25,20 @@ public class GameView extends View {
             posDiskGenX, posDiskGenY;
     private Board board;
     private Player player1;
+    private Player player2;
+    private Player currentPlayer;
+
+    //Winning sequence
+    Iterable<Board.Place> winningSequence;
 
     public GameView(Context context) {
         super(context);
         calculateWidthAndHeight();
-        player1 = new Player("me");
+        player1 = new Player("Aang");
+        player1.setColor(Color.BLUE);
+        player2 = new Player("Toph");
+        player2.setColor(Color.RED);
+        currentPlayer = player1;
     }
 
     private void calculateWidthAndHeight() {
@@ -61,18 +72,28 @@ public class GameView extends View {
         float xCoordinate = event.getX();
         float yCoordinate = event.getY();
         int colIndex = columnIndex(xCoordinate);
-        switch( event.getAction() ){
-            case MotionEvent.ACTION_DOWN:
-                Log.d("TOUCH PRESS", String.format("DISK WAS PRESSED!!!"));
-                break;
-            case MotionEvent.ACTION_UP:
-                Log.d("TOUCH RELEASE", String.format("X Coordinate: %f \n Y Coordinate: %f", xCoordinate, yCoordinate));
-                board.dropDisc(colIndex, player1);
-                break;
-            default:
-                break;
+        if (yCoordinate >= posGridGenY && yCoordinate <= (posGridGenY+playUnitSize)) {
+            switch( event.getAction() ){
+                case MotionEvent.ACTION_DOWN:
+                    Log.d("TOUCH PRESS", String.format("DISK WAS PRESSED!!!"));
+                    break;
+                case MotionEvent.ACTION_UP:
+                    Log.d("TOUCH RELEASE", String.format("X Coordinate: %f \n Y Coordinate: %f", xCoordinate, yCoordinate));
+                    board.dropDisc(colIndex, currentPlayer);
+                    switchPlayer();
+                    break;
+                default:
+                    break;
+            }
         }
+
         return true;
+    }
+
+    private void switchPlayer() {
+        if (currentPlayer == player1)
+            currentPlayer = player2;
+        else currentPlayer = player1;
     }
 
     public int columnIndex(float x){
@@ -142,7 +163,7 @@ public class GameView extends View {
         Log.d("Draw_PlayFormat", String.format("posDiskGenX \t\t %d", posDiskGenX));
         Log.d("Draw_PlayFormat", String.format("posDiskGenY \t\t %d", posDiskGenY));
 
-        // Draw Circles
+        // Draw Circles with color
         paintDisks.setStrokeWidth(1);
         paintDisks.setColor(Color.BLUE);
         /*
@@ -158,10 +179,10 @@ public class GameView extends View {
             canvas.drawCircle(
                     posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
                     posGridGenY + (long)(playUnitSize/2) + playUnitPad,
-                    diskRadius, paintDisks);
-        }
+                    diskRadius, currentPlayer.getPaint());
+        }//DRAW TOP CIRCLES LOOP END
 
-        // Draw the rest of the circles that should be made
+        // Draw the rest of the circles that should be made when falling onto the columns
         for (int i = 0; i < board.numOfColumns(); i++) {
             for (int j = 0; j < board.numOfRows(); j++) {
                 // The circles are placeholders for possible positions of disks
@@ -173,15 +194,39 @@ public class GameView extends View {
                     canvas.drawCircle(
                             posGridGenX + (long)(playUnitSize/2) + playUnitPad + (i * playUnitSize),
                             posGridGenY + (long)(playUnitSize/2) + playUnitPad + ((j+1) * playUnitSize),
-                            diskRadius, paintDisks);
+                            diskRadius, player.getPaint());
                 }
 
             }
-        }
+        }// draw circles when dropping in columns LOOP END
 
+        //Drawing players and their names on game startup
         drawPlayers(canvas);
         drawPlayerNames(canvas);
 
+        /* If a given player has won, draw the strokes for the winning sequence */
+        if(board.isWonBy(player1)) {
+            winningSequence = board.winningRow();  //save winning sequence in an Iterable
+            paintDisks.setColor(Color.GREEN);      //paint winning sequence GREEN
+            for (Board.Place coordinates : winningSequence) {
+                int i = coordinates.getX();
+                int j = coordinates.getY();
+
+                // The circles are placeholders for possible positions of disks
+                Player player = board.playerAt(i, j);
+                if (player != null) {
+                Log.d("Draw_Circle", String.format("Circle \t\t %d, %d",
+                        posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
+                        posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize)));
+                canvas.drawCircle(
+                        posGridGenX + (long) (playUnitSize / 2) + playUnitPad + (i * playUnitSize),
+                        posGridGenY + (long) (playUnitSize / 2) + playUnitPad + ((j + 1) * playUnitSize),
+                        diskRadius, paintDisks);
+                }//end if statement
+            }//end for loop for winning sequence
+
+
+        }//winning sequence if statement
     } //end onDraw method
 
     public void drawPlayers(Canvas canvas){
